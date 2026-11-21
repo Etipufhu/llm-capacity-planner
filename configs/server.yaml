@@ -1,0 +1,38 @@
+# Server settings: parallel slots (OLLAMA_NUM_PARALLEL) and KV cache precision.
+#
+#   capplan sweep configs/server.yaml
+#
+# np1 is the old Ollama default: one request at a time, the rest wait in a
+# queue. np32-kv16 keeps the 32 slots but stores the KV cache in 16 bit,
+# which needs about 5.6 GB on its own.
+
+defaults:
+  workload: brief
+  model: qwen3:1.7b
+  max_tokens: 320
+  rounds: 4
+  min_requests: 16
+  concurrency: [1, 4, 16, 32]
+  extra_body:
+    reasoning_effort: none
+  server:
+    engine: ollama
+    env:
+      OLLAMA_CONTEXT_LENGTH: 1536
+      OLLAMA_FLASH_ATTENTION: 1
+      OLLAMA_KV_CACHE_TYPE: q8_0
+      LLAMA_ARG_CACHE_RAM: 0
+
+runs:
+  - name: np1
+    group: parallel
+    server: {env: {OLLAMA_NUM_PARALLEL: 1}}
+  - name: np4
+    group: parallel
+    server: {env: {OLLAMA_NUM_PARALLEL: 4}}
+  - name: np32
+    group: parallel
+    server: {env: {OLLAMA_NUM_PARALLEL: 32}}
+  - name: np32-kv16
+    group: kv
+    server: {env: {OLLAMA_NUM_PARALLEL: 32, OLLAMA_KV_CACHE_TYPE: f16}}

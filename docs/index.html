@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Capacity Planner</title>
+<meta name="description" content="How many GPUs, and what monthly cost, to serve a small LLM chatbot to N users. Built on load tests of Qwen3-1.7B.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>LLM capacity planner</h1>
+    <p class="lede">How many GPUs does it take to serve a Qwen3-1.7B chatbot to a given number of users, and what does that cost a month? The laptop row is measured; the cloud rows are scaled from it by memory bandwidth and are estimates.</p>
+  </header>
+
+  <section class="controls" aria-label="Inputs">
+    <label>Workload
+      <select id="workload"></select>
+    </label>
+    <label>Active users at peak
+      <input id="users" type="number" min="1" step="1">
+    </label>
+    <label>Reading and typing time between messages (s)
+      <input id="think" type="number" min="0" step="1">
+    </label>
+    <label>Time to first token, p95 limit (ms)
+      <input id="ttft" type="number" min="50" step="50">
+    </label>
+    <label>Minimum streaming speed per user (tokens/s)
+      <input id="toks" type="number" min="1" step="1">
+    </label>
+    <label>Headroom (%)
+      <input id="headroom" type="number" min="0" max="90" step="5">
+    </label>
+  </section>
+
+  <section class="answer" aria-live="polite">
+    <p id="headline" class="headline"></p>
+    <p id="subline" class="subline"></p>
+  </section>
+
+  <section>
+    <h2>Per GPU</h2>
+    <div class="table-wrap">
+      <table id="gpus">
+        <thead>
+          <tr>
+            <th>GPU</th>
+            <th class="num">Requests in flight within SLO</th>
+            <th>Limited by</th>
+            <th class="num">Users per GPU</th>
+            <th class="num">GPUs</th>
+            <th class="num">$ per GPU-hour</th>
+            <th class="num">$ per month</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="note" id="price-note"></p>
+  </section>
+
+  <section>
+    <h2>Measured on the laptop</h2>
+    <p class="note" id="measured-note"></p>
+    <div class="table-wrap">
+      <table id="measured">
+        <thead>
+          <tr>
+            <th class="num">Concurrent requests</th>
+            <th class="num">Total tokens/s</th>
+            <th class="num">TTFT p50 (ms)</th>
+            <th class="num">TTFT p95 (ms)</th>
+            <th class="num">Inter-token p95 (ms)</th>
+            <th class="num">Answer time p50 (s)</th>
+            <th class="num">Errors</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="method">
+    <h2>How the numbers are made</h2>
+    <ol>
+      <li><strong>SLO on the measured points.</strong> The laptop can hold as many requests in flight as it can while the p95 time to first token and the p95 gap between tokens stay under the limits. Between two measured concurrency levels the crossing is interpolated.</li>
+      <li><strong>Little's law.</strong> An active user sends a message, waits W seconds for the answer, then reads and types for Z seconds. One request slot that never sits idle therefore serves (W + Z) / W users.</li>
+      <li><strong>Other GPUs.</strong> Generating tokens for a small model is limited by how fast the weights and KV cache can be read from memory, so latency is divided by the ratio of memory bandwidth. The p95 curves are fitted as a straight line in concurrency and solved for the SLO. The KV cache that fits in the card's memory gives a second limit. These rows are estimates, not measurements: a production server such as vLLM would batch better than Ollama does.</li>
+      <li><strong>Cost.</strong> GPUs needed = users / (users per GPU), rounded up; monthly cost = GPUs × hourly price × 730 hours.</li>
+    </ol>
+    <p class="note">Source code, raw results and limitations: <a href="https://github.com/Etipufhu/llm-capacity-planner">github.com/Etipufhu/llm-capacity-planner</a></p>
+  </section>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

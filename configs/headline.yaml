@@ -1,0 +1,37 @@
+# Headline sweep: the two workloads on the default server setup. Both models
+# are 8-bit (Q8_0): the brief model is the PR Radar fine-tune, the chat model
+# is the stock Qwen3-1.7B. configs/quant.yaml shows what 4-bit would change.
+#
+#   capplan sweep configs/headline.yaml
+#
+# Server: 32 parallel slots of 1536 tokens each, flash attention, 8-bit KV
+# cache (the 32 slots need 2.9 GB of KV cache in 8-bit, 5.6 GB in 16-bit),
+# and llama-server's cross-request prompt cache in host RAM switched off so a
+# repeated prompt is not answered from cache. Prefix reuse inside a slot (the
+# shared system prompt) stays on, as it would in production.
+
+defaults:
+  max_tokens: 320
+  rounds: 4
+  min_requests: 16
+  concurrency: [1, 2, 4, 8, 16, 32]
+  extra_body:
+    reasoning_effort: none  # Qwen3: answer directly, no thinking block
+  server:
+    engine: ollama
+    env:
+      OLLAMA_NUM_PARALLEL: 32
+      OLLAMA_CONTEXT_LENGTH: 1536
+      OLLAMA_FLASH_ATTENTION: 1
+      OLLAMA_KV_CACHE_TYPE: q8_0
+      LLAMA_ARG_CACHE_RAM: 0
+
+runs:
+  - name: brief-model
+    group: headline
+    model: brief-qwen3:q8_0
+    workload: brief
+  - name: chat
+    group: headline
+    model: qwen3:1.7b-q8_0
+    workload: chat

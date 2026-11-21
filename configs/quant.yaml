@@ -1,0 +1,35 @@
+# Weight precision: the same Qwen3-1.7B at 4-bit (Q4_K_M), 8-bit (Q8_0) and
+# 16-bit on the brief workload.
+#
+#   capplan sweep configs/quant.yaml
+#
+# 16 slots instead of 32 so the 16-bit weights (3.4 GB) and the KV cache still
+# fit in the 8 GB card next to the desktop.
+
+defaults:
+  workload: brief
+  max_tokens: 320
+  rounds: 4
+  min_requests: 16
+  concurrency: [1, 2, 4, 8, 16]
+  extra_body:
+    reasoning_effort: none
+  server:
+    engine: ollama
+    env:
+      OLLAMA_NUM_PARALLEL: 16
+      OLLAMA_CONTEXT_LENGTH: 1536
+      OLLAMA_FLASH_ATTENTION: 1
+      OLLAMA_KV_CACHE_TYPE: q8_0
+      LLAMA_ARG_CACHE_RAM: 0
+
+runs:
+  - name: q4_K_M
+    group: quant
+    model: qwen3:1.7b
+  - name: q8_0
+    group: quant
+    model: qwen3:1.7b-q8_0
+  - name: fp16
+    group: quant
+    model: qwen3:1.7b-fp16

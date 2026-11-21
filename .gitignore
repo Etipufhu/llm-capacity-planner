@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.env
+
+# Portable Ollama and other local tools (see README for how to fetch them)
+.tools/
+
+# Server logs from benchmark runs
+results/logs/
+
+# Merged / converted model weights
+models/

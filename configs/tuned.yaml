@@ -1,0 +1,36 @@
+# Slots matched to load: for each concurrency level, a fresh server with that
+# many parallel slots (OLLAMA_NUM_PARALLEL = concurrency).
+#
+#   capplan sweep configs/tuned.yaml
+#
+# In this Ollama / llama.cpp build, idle slots slow every decoding step down
+# (see configs/server.yaml: at 4 concurrent requests, 4 slots give twice the
+# throughput of 32), so a deployment would size the slot count to the load it
+# expects. These runs are what the capacity model uses. Everything else is as
+# in configs/headline.yaml.
+
+defaults:
+  max_tokens: 320
+  rounds: 4
+  min_requests: 16
+  concurrency: [1, 2, 4, 8, 16, 32]
+  match_parallel: true
+  extra_body:
+    reasoning_effort: none
+  server:
+    engine: ollama
+    env:
+      OLLAMA_CONTEXT_LENGTH: 1536
+      OLLAMA_FLASH_ATTENTION: 1
+      OLLAMA_KV_CACHE_TYPE: q8_0
+      LLAMA_ARG_CACHE_RAM: 0
+
+runs:
+  - name: brief-tuned
+    group: tuned
+    model: brief-qwen3:q8_0
+    workload: brief
+  - name: chat-tuned
+    group: tuned
+    model: qwen3:1.7b-q8_0
+    workload: chat

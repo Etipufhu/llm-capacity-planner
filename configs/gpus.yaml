@@ -1,0 +1,53 @@
+# GPUs for the cost model.
+#
+# bandwidth_gbs: peak memory bandwidth from the vendor spec sheet.
+# price_per_hour: AWS on-demand Linux price in us-east-1 for the smallest
+# instance with that GPU, divided by its GPU count (so it includes the CPU,
+# RAM and disk that come with the instance). Read from instances.vantage.sh,
+# which mirrors the AWS price list, on 2026-11-21. Prices change; the
+# calculator lets you type your own.
+
+price_date: "2026-11-21"
+price_note: "AWS on-demand, Linux, us-east-1, per GPU (instance price / GPU count)"
+
+measured:
+  name: RTX 5070 Laptop
+  bandwidth_gbs: 384
+  vram_gb: 8
+
+cloud:
+  - name: L4
+    bandwidth_gbs: 300
+    vram_gb: 24
+    instance: g6.xlarge
+    gpus_per_instance: 1
+    instance_price_per_hour: 0.8048
+    source: https://instances.vantage.sh/aws/ec2/g6.xlarge
+  - name: A10G
+    bandwidth_gbs: 600
+    vram_gb: 24
+    instance: g5.xlarge
+    gpus_per_instance: 1
+    instance_price_per_hour: 1.006
+    source: https://instances.vantage.sh/aws/ec2/g5.xlarge
+  - name: L40S
+    bandwidth_gbs: 864
+    vram_gb: 48
+    instance: g6e.xlarge
+    gpus_per_instance: 1
+    instance_price_per_hour: 1.861
+    source: https://instances.vantage.sh/aws/ec2/g6e.xlarge
+  - name: A100 40GB
+    bandwidth_gbs: 1555
+    vram_gb: 40
+    instance: p4d.24xlarge
+    gpus_per_instance: 8
+    instance_price_per_hour: 21.957642
+    source: https://instances.vantage.sh/aws/ec2/p4d.24xlarge
+  - name: H100 80GB
+    bandwidth_gbs: 3350
+    vram_gb: 80
+    instance: p5.48xlarge
+    gpus_per_instance: 8
+    instance_price_per_hour: 55.04
+    source: https://instances.vantage.sh/aws/ec2/p5.48xlarge
